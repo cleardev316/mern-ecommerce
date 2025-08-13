@@ -21,14 +21,32 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+// configure cors
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "device-remember-token",
+      "Access-Control-Allow-Origin",
+      "Origin",
+      "Accept",
+    ],
+  })
+);
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const __dirname = path.resolve(); // Set {__dirname} to current working directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// const __dirname = path.resolve(); // Set {__dirname} to current working directory
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/users', userRoutes);

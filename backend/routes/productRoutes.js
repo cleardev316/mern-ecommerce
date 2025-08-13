@@ -11,6 +11,7 @@ import {
 import { protect, admin } from '../middleware/authMiddleware.js';
 import validateRequest from '../middleware/validator.js';
 import {body, check, param} from 'express-validator';
+import upload from '../utils/multer.js';
 
 const router = express.Router();
 
@@ -83,14 +84,14 @@ const validator = {
 }
 
 router.route('/')
-  .post(validator.createProduct, validateRequest, protect, admin, createProduct)
+  .post(validator.createProduct, validateRequest, protect, admin, upload.single("image"), createProduct)
   .get(validator.getProducts, validateRequest, getProducts);
 router.get('/top', getTopProducts);
 router.post('/reviews/:id', validator.createProductReview, validateRequest, protect, createProductReview);
 router
   .route('/:id')
   .get(validator.getProduct, validateRequest, getProduct)
-  .put(validator.updateProduct, validateRequest, protect, admin, updateProduct)
+  .put(validator.updateProduct, validateRequest, protect, admin, upload.single("image"), updateProduct)
   .delete(validator.deleteProduct, validateRequest, protect, admin, deleteProduct);
 
 export default router;

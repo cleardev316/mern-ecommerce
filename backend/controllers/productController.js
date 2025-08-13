@@ -1,5 +1,7 @@
 import Product from '../models/productModel.js';
+import { uploadMedia } from '../utils/cloudinary.js';
 import { deleteFile } from '../utils/file.js';
+import fs from 'fs';
 
 // @desc     Fetch All Products
 // @method   GET
@@ -81,13 +83,25 @@ const getProduct = async (req, res, next) => {
 // @access   Private/Admin
 const createProduct = async (req, res, next) => {
   try {
-    const { name, image, description, brand, category, price, countInStock } =
+    const { name, description, brand, category, price, countInStock } =
       req.body;
+
+    // image won't be in body now, it will be in file
+    if (!req.file) {
+      throw new Error("File is required")
+    }
+
+    const imageResult = await uploadMedia(req.file.path);
+    const imageUrl = imageResult.secure_url;
+
+    // Clean up temp file
+    fs.unlinkSync(req.file.path);
+
     console.log(req.file);
     const product = new Product({
       user: req.user._id,
       name,
-      image,
+      image: imageUrl,
       description,
       brand,
       category,
@@ -108,8 +122,18 @@ const createProduct = async (req, res, next) => {
 // @access   Private/Admin
 const updateProduct = async (req, res, next) => {
   try {
-    const { name, image, description, brand, category, price, countInStock } =
+    const { name, description, brand, category, price, countInStock } =
       req.body;
+
+    if (!req.file) {
+      throw new Error("File is required")
+    }
+
+    const imageResult = await uploadMedia(req.file.path);
+    const imageUrl = imageResult.secure_url;
+
+    // Clean up temp file
+    fs.unlinkSync(req.file.path);
 
     const product = await Product.findById(req.params.id);
 
@@ -119,10 +143,10 @@ const updateProduct = async (req, res, next) => {
     }
 
     // Save the current image path before updating
-    const previousImage = product.image;
+    const previousImage = product.imageUrl;
 
     product.name = name || product.name;
-    product.image = image || product.image;
+    product.image = imageUrl || product.image;
     product.description = description || product.description;
     product.brand = brand || product.brand;
     product.category = category || product.category;
