@@ -1,6 +1,7 @@
 import express from 'express';import { body, check } from 'express-validator';
 import multer from 'multer';
 import validateRequest from '../middleware/validator.js';
+import { uploadMedia } from '../utils/cloudinary.js';
 
 const router = express.Router();
 
@@ -23,20 +24,31 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
   } else {
         // To reject this file pass `false`, like so:
-    cb('Images only!');
+    cb(new Error('Images only!'), false); 
   }
 };
 
 const upload = multer({ storage, fileFilter }).single('image');
 
-router.post('/', upload, (req, res) => {
-  if (!req.file)
-    throw res.status(400).json({error: 'No file uploaded'});
+router.post('/', upload, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
 
-  res.send({
-    message: 'Image uploaded',
-    imageUrl: `/${req.file.path}`
-  });
+    const imageResult = await uploadMedia(req.file.path);
+    const imageUrl = imageResult.secure_url;
+
+    fs.unlinkSync(req.file.path);
+
+    res.json({
+      message: 'Image uploaded successfully',
+      imageUrl
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;
